@@ -73,62 +73,59 @@ namespace FleetLogic.Controllers
             return NoContent();
         }
 
-        // DTO для прийому даних
-        public class TelemetryDto : Telemetry
-        {
-            public int DrivingTimeHours { get; set; } // Час в дорозі
-        }
+        
 
         [HttpPost]
-        public async Task<ActionResult<Telemetry>> PostTelemetry(TelemetryDto telemetryDto)
+        public async Task<ActionResult<Telemetry>> PostTelemetry(Telemetry telemetryDto)
+{
+    // Створюємо змінну для статусу
+    string status = "OK";
+    string message = "Normal operation.";
+
+    // 1. ПЕРЕВІРКА ЧАСУ (Тахограф)
+    if (telemetryDto.DrivingTimeHours > 9)
+    {
+        status = "FATIGUE";
+        message = $"CRITICAL: Driving time {telemetryDto.DrivingTimeHours}h exceeds limit (9h)!";
+    }
+
+    // 2. ПЕРЕВІРКА ШВИДКОСТІ (Спідометр)
+    // Якщо вже є втома, додаємо і перевищення
+    if (telemetryDto.Speed > 90)
+    {
+        if (status == "FATIGUE")
         {
-            // Створюємо змінну для статусу
-            string status = "OK";
-            string message = "Normal operation.";
-
-            // 1. ПЕРЕВІРКА ЧАСУ (Тахограф)
-            if (telemetryDto.DrivingTimeHours > 9)
-            {
-                status = "FATIGUE";
-                message = $"CRITICAL: Driving time {telemetryDto.DrivingTimeHours}h exceeds limit (9h)!";
-            }
-
-            // 2. ПЕРЕВІРКА ШВИДКОСТІ (Спідометр)
-            // Якщо вже є втома, додаємо і перевищення
-            if (telemetryDto.Speed > 90)
-            {
-                if (status == "FATIGUE")
-                {
-                    status = "DOUBLE_DANGER"; // Комбо!
-                    message += " AND Speeding detected!";
-                }
-                else
-                {
-                    status = "SPEEDING";
-                    message = "Speed limit exceeded!";
-                }
-            }
-
-            // 3. Зберігаємо в базу
-            var telemetry = new Telemetry
-            {
-                TruckId = telemetryDto.TruckId,
-                Speed = telemetryDto.Speed,
-                GpsLatitude = telemetryDto.GpsLatitude,
-                GpsLongitude = telemetryDto.GpsLongitude,
-                Timestamp = DateTime.UtcNow
-            };
-
-            _context.TelemetryLogs.Add(telemetry);
-            await _context.SaveChangesAsync();
-
-            // Повертаємо вердикт
-            return Ok(new
-            {
-                status = status,
-                message = message
-            });
+            status = "DOUBLE_DANGER"; // Комбо!
+            message += " AND Speeding detected!";
         }
+        else
+        {
+            status = "SPEEDING";
+            message = "Speed limit exceeded!";
+        }
+    }
+
+    // 3. Зберігаємо в базу
+    var telemetry = new Telemetry
+    {
+        TruckId = telemetryDto.TruckId,
+        Speed = telemetryDto.Speed,
+        DrivingTimeHours = telemetryDto.DrivingTimeHours,
+        GpsLatitude = telemetryDto.GpsLatitude,
+        GpsLongitude = telemetryDto.GpsLongitude,
+        Timestamp = DateTime.UtcNow
+    };
+
+    _context.TelemetryLogs.Add(telemetry);
+    await _context.SaveChangesAsync();
+
+    // Повертаємо вердикт
+    return Ok(new
+    {
+        status = status,
+        message = message
+    });
+}
 
         // DELETE: api/Telemetries/5
         [HttpDelete("{id}")]

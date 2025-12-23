@@ -4,6 +4,7 @@
     {
         public int Id { get; set; }
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        public int DrivingTimeHours { get; set; }
         public double Speed { get; set; }
         public double GpsLatitude { get; set; }
         public double GpsLongitude { get; set; }

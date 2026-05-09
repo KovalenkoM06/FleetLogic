@@ -15,5 +15,16 @@ namespace FleetLogic.Data
         public DbSet<Telemetry> TelemetryLogs { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Alert> Alerts { get; set; }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Зв'язуємо водія з його акаунтом (1 до 1)
+            modelBuilder.Entity<Driver>()
+                .HasOne(d => d.User)
+                .WithOne()
+                .HasForeignKey<Driver>(d => d.UserId);
+        }
     }
+                    
 }

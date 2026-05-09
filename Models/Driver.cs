@@ -6,6 +6,8 @@
         public string FullName { get; set; } = string.Empty;
         public int ExperienceYears { get; set; }
 
+        public int UserId { get; set; }
+        public User User { get; set; }
         // Зв'язок: Водій може бути закріплений за фурою
         public int? CurrentTruckId { get; set; }
     }
